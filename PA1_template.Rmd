@@ -2,19 +2,75 @@
 
 
 ## Loading and preprocessing the data
-
-
-
+This assumes that the file has already been downloaded and present in the current working directory
+Now unzip it
+```{r}
+unzip("repdata.zip")
+```
+And read the data and convert the strings in the "date" variable to date
+```{r}
+repdata <- read.csv("activity.csv", stringsAsFactors=FALSE)
+repdata$date <- as.Date(repdata$date, "%Y-%m-%d")
+```
 ## What is mean total number of steps taken per day?
-
-
-
+Show the histogram of daily number of steps
+```{r}
+hist(aggregate(steps ~ date, FUN=sum, data=repdata, na.rm=TRUE)$steps)
+```
+And calculate the mean and median
+```{r}
+aggregate(steps ~ date, FUN=mean, data=repdata, na.rm=TRUE)
+aggregate(steps ~ date, FUN=median, data=repdata, na.rm=TRUE)
+```
 ## What is the average daily activity pattern?
-
-
-
+Make a time series line plot
+```{r}
+plot(aggregate(steps ~ interval, FUN=mean, data=repdata, na.rm=TRUE), type="l")
+```
+And show which interval has the maximum number of steps - it turns out to be interval 835
+```{r}
+temp.data <- aggregate(steps ~ interval, FUN=mean, data=repdata, na.rm=TRUE)
+temp.data[which.max(temp.data$steps),]
+```
 ## Imputing missing values
-
-
-
+Report the number of missing values in the data set - there seem to be 2304 NAs
+```{r}
+sum(is.na(repdata$steps))
+```
+For the missing data imputation, I will use interval averages, because there are 8 dates with all NAs, but all intervals have 53 observations
+```{r}
+aggregate(!is.na(steps) ~ date, FUN=sum, data=repdata)
+aggregate(!is.na(steps) ~ interval, FUN=sum, data=repdata)
+```
+The imputation code
+```{r}
+intavg <- aggregate(steps ~ interval, FUN=mean, data=repdata, na.rm=TRUE)
+rownames(intavg) <- paste0("I", as.character(intavg$interval))
+impdata <- repdata
+for (i in 1:nrow(repdata)) {
+  if (is.na(repdata[i, "steps"])){
+    impdata[i, "steps"] <- intavg[paste0("I", as.character(repdata[i, "interval"])), 2]
+  }
+}
+```
+And repeat some previous steps after imputation
+```{r}
+hist(aggregate(steps ~ date, FUN=sum, data=impdata, na.rm=TRUE)$steps)
+aggregate(steps ~ date, FUN=mean, data=impdata, na.rm=TRUE)
+aggregate(steps ~ date, FUN=median, data=impdata, na.rm=TRUE)
+```
+Those numbers are obviously different - we now have more values
 ## Are there differences in activity patterns between weekdays and weekends?
+Create new factor variable - note that in this case, I used Polish names as this is the default on my system. That is why you might not recognize the week names
+```{r}
+impdata$daytype <- weekdays(impdata$date) %in% c("sobota", "niedziela")
+impdata$daytype[impdata$daytype] <- "weekend"
+impdata$daytype["FALSE" == impdata$daytype] <- "weekday"
+impdata$daytype <- as.factor(impdata$daytype)
+```
+Create the plot
+```{r}
+par(mfrow=c(2,1))
+with(impdata["weekend" == impdata$daytype,], plot(aggregate(steps ~ interval, FUN=mean), type="l", main="weekend"))
+with(impdata["weekday" == impdata$daytype,], plot(aggregate(steps ~ interval, FUN=mean), type="l", main="weekday"))
+```
