@@ -17,10 +17,10 @@ Show the histogram of daily number of steps
 ```{r}
 hist(aggregate(steps ~ date, FUN=sum, data=repdata, na.rm=TRUE)$steps)
 ```
-And calculate the mean and median
+And calculate the mean and median of total daily steps (as single values summarizing the entire data set)
 ```{r}
-aggregate(steps ~ date, FUN=mean, data=repdata, na.rm=TRUE)
-aggregate(steps ~ date, FUN=median, data=repdata, na.rm=TRUE)
+mean(aggregate(steps ~ date, FUN=sum, data=repdata, na.rm=TRUE)$steps, na.rm=TRUE)
+median(aggregate(steps ~ date, FUN=sum, data=repdata, na.rm=TRUE)$steps, na.rm=TRUE)
 ```
 ## What is the average daily activity pattern?
 Make a time series line plot
@@ -56,10 +56,10 @@ for (i in 1:nrow(repdata)) {
 And repeat some previous steps after imputation
 ```{r}
 hist(aggregate(steps ~ date, FUN=sum, data=impdata, na.rm=TRUE)$steps)
-aggregate(steps ~ date, FUN=mean, data=impdata, na.rm=TRUE)
-aggregate(steps ~ date, FUN=median, data=impdata, na.rm=TRUE)
+mean(aggregate(steps ~ date, FUN=sum, data=impdata, na.rm=TRUE)$steps, na.rm=TRUE)
+median(aggregate(steps ~ date, FUN=sum, data=impdata, na.rm=TRUE)$steps, na.rm=TRUE)
 ```
-Those numbers are obviously different - we now have more values
+The mean has not changed (due to the way imputation was performed), but the median changed due to the fact we now have more values 
 ## Are there differences in activity patterns between weekdays and weekends?
 Create new factor variable - note that in this case, I used Polish names as this is the default on my system. That is why you might not recognize the week names
 ```{r}
